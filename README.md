@@ -13,6 +13,7 @@ A client-side router for ClojureScript.
   * [Route matchers](#route-matchers)
   * [Parameter destructuring](#parameter-destructuring)
   * [Query parmeters](#query-parameters)
+  * [Request context](#request-context)
   * [Named routes](#named-routes)
 - [Example with history](#example-with-googhistory)
 - [Available protocols](#available-protocols)
@@ -168,6 +169,29 @@ regular expression matchers.
 ;; ... will log
 ;; User: 10
 ;; "{:action \"delete\"}"
+```
+
+
+#### Request context
+
+If `dispatch!` is called with an additional context value, that
+value will be available in `:request-context` for string route
+matchers and to the last element for regular expression matchers.
+
+```clojure
+(defroute "/users/:id" [id request-context]
+  (js/console.log (str "User: " id))
+  (js/console.log (pr-str request-context)))
+
+(defroute #"/users/(\d+)" [id {:keys [request-context]}]
+  (js/console.log (str "User: " id))
+  (js/console.log (pr-str request-context)))
+
+;; In both instances...
+(secretary/dispatch! "/users/10" {:page :users})
+;; ... will log
+;; User: 10
+;; "{:page :users}"
 ```
 
 

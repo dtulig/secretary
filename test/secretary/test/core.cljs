@@ -195,6 +195,34 @@
       (is (= (secretary/dispatch! (user-route {:id "2"}))
            {:id "2"}))))
 
+  (testing "dispatch! with query-params and context"
+    (secretary/reset-routes!)
+    (defroute #"/([a-z]+)/search" [letters {:keys [query-params request-context]}]
+      [letters query-params request-context])
+
+    (is (= (secretary/dispatch! "/abc/search" {:page :index})
+           ["abc" nil {:page :index}]))
+
+    (is (= (secretary/dispatch! "/abc/search?flavor=pineapple&walnuts=true" {:page :index})
+           ["abc" {:flavor "pineapple" :walnuts "true"} {:page :index}])))
+
+  (testing "dispatch! with regex routes and context"
+    (secretary/reset-routes!)
+    (defroute #"/([a-z]+)/(\d+)" [letters digits {:keys [request-context]}]
+      [letters digits request-context])
+
+    (is (= (secretary/dispatch! "/xyz/123" {:page :index})
+           ["xyz" "123" {:page :index}])))
+
+  (testing "dispatch! with vector routes and context"
+    (secretary/reset-routes!)
+    (defroute ["/:num/socks" :num #"[0-9]+"]
+      {:keys [num request-context]}
+      [(str num "socks") request-context])
+
+    (is (= (secretary/dispatch! "/bacon/socks" {:page :index}) {:request-context {:page :index}}))
+    (is (= (secretary/dispatch! "/123/socks" {:page :index}) ["123socks" {:page :index}])))
+
   (testing "named routes"
     (secretary/reset-routes!)
 

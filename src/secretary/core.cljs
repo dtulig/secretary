@@ -311,16 +311,20 @@
     (str "/" uri)))
 
 (defn dispatch!
-  "Dispatch an action for a given route if it matches the URI path."
-  [uri]
-  (let [[uri-path query-string] (string/split (uri-without-prefix uri) #"\?")
-        uri-path (uri-with-leading-slash uri-path)
-        query-params (when query-string
-                       {:query-params (decode-query-params query-string)})
-        {:keys [action params]} (locate-route uri-path)
-        action (or action identity)
-        params (merge params query-params)]
-    (action params)))
+  "Dispatch an action for a given route if it matches the URI path.
+  Optionally provide context to the route."
+  ([uri] (dispatch! uri nil))
+  ([uri context]
+     (let [[uri-path query-string] (string/split (uri-without-prefix uri) #"\?")
+           uri-path (uri-with-leading-slash uri-path)
+           query-params (when query-string
+                          {:query-params (decode-query-params query-string)})
+           request-context (when context
+                             {:request-context context})
+           {:keys [action params]} (locate-route uri-path)
+           action (or action identity)
+           params (merge params (merge query-params request-context))]
+       (action params))))
 
 (defn invalid-params [params validations]
   (reduce (fn [m [key validation]]
